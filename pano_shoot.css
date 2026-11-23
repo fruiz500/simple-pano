@@ -1,0 +1,37 @@
+/* Simple Pano: the camera screen (pano_shoot.js). Plain CSS, no build step. */
+#shoot { position: fixed; inset: 0; z-index: 60; background: #000; color: #fff; font-family: inherit; touch-action: none; user-select: none; -webkit-user-select: none; }
+#shoot button { font: inherit; color: #fff; border: 0; cursor: pointer; }
+.shoot-screen { position: absolute; inset: 0; display: flex; flex-direction: column; justify-content: center; gap: 12px; padding: 20px; max-width: 520px; margin: 0 auto; overflow: auto; }
+.shoot-screen h2 { font-size: 1.5rem; font-weight: 800; }
+.shoot-screen p { color: #99f6e4; font-size: .95rem; }
+.shoot-screen button[data-mode] { text-align: left; background: #0d9488; border-radius: 14px; padding: 14px 16px; display: flex; flex-direction: column; gap: 2px; }
+.shoot-screen button[data-mode] b { font-size: 1.1rem; }
+.shoot-screen button[data-mode] span { font-size: .85rem; opacity: .9; }
+.shoot-chk { display: flex; gap: 10px; align-items: center; font-size: .95rem; padding: 6px 2px; }
+.shoot-chk input { width: 22px; height: 22px; }
+.shoot-plain { background: transparent; border: 1px solid rgba(255,255,255,.4) !important; border-radius: 12px; padding: 12px; }
+#shoot-cam { position: absolute; inset: 0; overflow: hidden; }
+#shoot-cam.flash::after { content: ''; position: absolute; inset: 0; background: #fff; opacity: .5; }
+#shoot-video, #shoot-gl { position: absolute; inset: 0; width: 100%; height: 100%; }
+#shoot-video { object-fit: cover; }
+#shoot-cross { position: absolute; left: 50%; top: 50%; width: 36px; height: 36px; margin: -18px 0 0 -18px; border: 2px solid #fff; border-radius: 50%; box-shadow: 0 0 0 1px rgba(0,0,0,.5); pointer-events: none; }
+#shoot-cross.on { border-color: #22ff88; background: rgba(34,255,136,.3); }
+#shoot-arrow { position: absolute; width: 0; height: 0; border-left: 26px solid #fff; border-top: 14px solid transparent; border-bottom: 14px solid transparent; filter: drop-shadow(0 0 3px #000); pointer-events: none; }
+#shoot-top { position: absolute; left: 0; right: 0; top: 0; display: flex; align-items: center; justify-content: space-between; padding: max(10px, env(safe-area-inset-top)) 12px 10px; background: linear-gradient(rgba(0,0,0,.55), transparent); }
+#shoot-top button { background: rgba(0,0,0,.45); border-radius: 12px; padding: 10px 14px; min-width: 48px; min-height: 44px; }
+#shoot-top .shoot-chip.on { background: #0d9488; }
+#shoot-count { font-weight: 700; text-shadow: 0 0 4px #000; }
+#shoot-hint { position: absolute; left: 0; right: 0; bottom: 132px; text-align: center; font-size: .95rem; padding: 0 16px; text-shadow: 0 0 4px #000, 0 0 8px #000; pointer-events: none; }
+#shoot-bottom { position: absolute; left: 0; right: 0; bottom: 0; display: flex; align-items: center; justify-content: space-around; padding: 14px 12px max(22px, env(safe-area-inset-bottom)); background: linear-gradient(transparent, rgba(0,0,0,.6)); }
+#shoot-shutter { width: 76px; height: 76px; border-radius: 50%; background: #fff !important; border: 5px solid rgba(255,255,255,.5) !important; background-clip: padding-box; }
+#shoot-shutter:active { transform: scale(.92); }
+.shoot-side { background: rgba(0,0,0,.45); border-radius: 12px; padding: 12px 18px; min-width: 84px; min-height: 48px; }
+.shoot-side.ready { background: #0d9488; }
+#shoot-ask { position: absolute; inset: 0; background: rgba(0,0,0,.6); align-items: center; justify-content: center; }
+#shoot-ask > div { background: #1f2937; border-radius: 16px; padding: 20px; display: flex; flex-direction: column; gap: 10px; width: min(86vw, 360px); }
+#shoot-ask button { border-radius: 12px; padding: 12px; background: #4b5563; }
+#shoot-ask-yes { background: #dc2626 !important; }
+#shoot-level { font-size: .9rem; font-weight: 700; padding: 6px 10px; border-radius: 10px; background: rgba(0,0,0,.45); }
+#shoot-level:empty { display: none; }
+#shoot-level.ok { color: #22ff88; }
+#shoot-level.bad { color: #fbbf24; }

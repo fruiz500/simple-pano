@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<!-- Simple Pano help. Copyright (C) 2026 Francisco Ruiz. SPDX-License-Identifier: GPL-3.0-or-later. See LICENSE. -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Simple Pano: Help</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%234f46e5'/%3E%3Cpath d='M3 12 L20 16 V48 L3 52 Z' fill='%23a5b4fc'/%3E%3Cpath d='M61 12 L44 16 V48 L61 52 Z' fill='%23a5b4fc'/%3E%3Crect x='22' y='14' width='20' height='36' rx='2' fill='%23e0e7ff'/%3E%3Cpath d='M3 43 L10 34 L15 39 L20 32 V48 L3 52 Z' fill='%233730a3'/%3E%3Cpath d='M22 41 L28 32 L33 38 L36 35 L42 41 V48 Q42 50 40 50 H24 Q22 50 22 48 Z' fill='%23312e81'/%3E%3Cpath d='M44 36 L49 41 L54 33 L61 42 V52 L44 48 Z' fill='%233730a3'/%3E%3Ccircle cx='33' cy='24' r='4' fill='%23fbbf24'/%3E%3C/svg%3E">
+<style>
+    :root { --bg: #1b1d21; --panel: #24272c; --panel2: #2d3137; --line: #3a3f46; --text: #e6e8eb; --dim: #9aa1ab; --acc: #14b8a6; }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; scrollbar-width: thin; scrollbar-color: #2a313a transparent; }
+    body { margin: 0; background: var(--bg); color: var(--text); font: 15px/1.6 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+    nav { position: fixed; top: 0; bottom: 0; left: 0; width: 230px; overflow-y: auto; background: var(--panel); border-right: 1px solid var(--line); padding: 18px 14px; font-size: 14px; }
+    nav b { display: block; font-size: 17px; margin-bottom: 12px; }
+    nav a { display: block; color: var(--dim); text-decoration: none; padding: 3px 6px; border-radius: 5px; }
+    nav a:hover { color: var(--text); background: var(--panel2); }
+    nav .sub { padding-left: 18px; font-size: 13px; }
+    main { margin-left: 230px; max-width: 900px; padding: 24px 40px 80px; }
+    h1 { font-size: 28px; margin: 0 0 4px; }
+    h2 { font-size: 22px; margin: 44px 0 10px; padding-bottom: 6px; border-bottom: 1px solid var(--line); }
+    h3 { font-size: 17px; margin: 26px 0 6px; color: var(--acc); }
+    p, li { color: #d3d7dc; }
+    a { color: var(--acc); }
+    kbd { font: 12px/1 ui-monospace, Consolas, monospace; background: var(--panel2); border: 1px solid var(--line); border-bottom-width: 2px; border-radius: 4px; padding: 2px 5px; white-space: nowrap; }
+    b.ui { color: #fff; font-weight: 600; }
+    table { border-collapse: collapse; width: 100%; margin: 8px 0 16px; font-size: 14px; }
+    th, td { text-align: left; vertical-align: top; padding: 6px 10px; border-bottom: 1px solid var(--line); }
+    th { color: var(--dim); font-weight: 600; }
+    .tip { background: #10312e; border-left: 3px solid var(--acc); padding: 8px 14px; border-radius: 0 6px 6px 0; margin: 12px 0; }
+    .recipe { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 4px 20px 10px; margin: 16px 0; }
+    .recipe h3 { margin-top: 14px; }
+    .recipe ol { padding-left: 22px; }
+    .lead { color: var(--dim); font-size: 16px; margin-top: 0; }
+    @media (max-width: 800px) { nav { position: static; width: auto; border-right: 0; border-bottom: 1px solid var(--line); } main { margin-left: 0; padding: 16px; } }
+</style>
+</head>
+<body>
+<nav>
+    <b>Simple Pano help</b>
+    <a href="#start">Getting started</a>
+    <a href="#shoot">Taking the photos</a>
+    <a href="#screen">The screen</a>
+    <a href="#align">1 · Align</a>
+    <a class="sub" href="#manual">Placing photos by hand</a>
+    <a class="sub" href="#front">Front and horizon</a>
+    <a class="sub" href="#poses">Saving your work</a>
+    <a href="#blend">Blending</a>
+    <a href="#retouch">2 · Retouch</a>
+    <a class="sub" href="#brushout">Brush out in the main view</a>
+    <a class="sub" href="#window">The retouch window</a>
+    <a class="sub" href="#fill">Fill: local and AI</a>
+    <a class="sub" href="#queue">AI spots and the queue</a>
+    <a class="sub" href="#tools">Tools for the background</a>
+    <a class="sub" href="#modes">Apply, Live, Preview</a>
+    <a class="sub" href="#list">The list of results</a>
+    <a class="sub" href="#logo">A logo at the nadir</a>
+    <a href="#bake">3 · Bake</a>
+    <a href="#bg">Background panoramas</a>
+    <a href="#ai">AI providers</a>
+    <a href="#keys">Keyboard and mouse</a>
+    <a href="#recipes">Recipes</a>
+    <a href="#touch">Phone or tablet</a>
+    <a href="#trouble">Troubleshooting</a>
+</nav>
+<main>
+<h1>Simple Pano</h1>
+<p class="lead">Stitches your photos into a 360° panorama, or a wide partial one, in your browser. Nothing is installed and nothing is uploaded, unless you send a spot to an online AI.</p>
+
+<h2 id="start">Getting started</h2>
+<ol>
+    <li>Press <b class="ui">Add Stitch Image(s)</b> and select all the photos at once. They are ordered by the time they were taken. The chooser shows all files, so on a phone or tablet the photos can come from Google Photos, Downloads, a memory card or any other place in its side menu; a file that is not a picture is skipped with a message.</li>
+    <li>Press <b class="ui">Edit</b> to open the panel, then <b class="ui">Auto-align all</b> in step 1. It takes from a few seconds to a minute or two for large sets.</li>
+    <li>Look around: drag with the left button, zoom with the wheel. Fix what needs fixing (see <a href="#recipes">Recipes</a>).</li>
+    <li>In step 3 press <b class="ui">Bake panorama</b>. A JPEG with panorama metadata is downloaded, ready for Google Photos, Facebook, panorama viewers or Simple Pano itself.</li>
+</ol>
+<div class="tip">You can also open a finished panorama with <b class="ui">Load Background Pano</b> just to look at it, or to retouch it (see <a href="#bg">Background panoramas</a>).</div>
+
+<h2 id="shoot">Taking the photos</h2>
+<p>Good photos make everything else easy:</p>
+<ul>
+    <li><b>Turn around the lens, not around yourself.</b> Hold the phone at the same spot and turn your body around it, or use a tripod. Turning around your own body moves the lens and causes double edges on near objects (parallax).</li>
+    <li><b>Overlap each photo with the next by about a third.</b> More overlap is better than less.</li>
+    <li><b>Cover everything:</b> a row level with the horizon, a row tilted up, a row tilted down, one straight up and one straight down. For a partial panorama, cover only what you need.</li>
+    <li><b>Lock the exposure if you can.</b> With automatic exposure, a photo with the sun in it comes out darker than its neighbors. Blending hides most of it; <a href="#r-darksky">a recipe</a> fixes the rest.</li>
+    <li><b>Avoid moving things in the overlaps,</b> or take an extra photo when the person has walked away; brushing out (below) then picks the clean one.</li>
+</ul>
+
+<h3 id="shootapp">Shooting from the app (phones and tablets)</h3>
+<p>Tap <b>Shoot</b> to use the device's camera inside Simple Pano. Pick what you want:</p>
+<ul>
+    <li><b>Full sphere:</b> everything around you, up and down, in about 30 pictures.</li>
+    <li><b>360° band:</b> one turn around at eye level, in about 10 pictures. Hold the phone upright; the band is as tall as the camera sees.</li>
+    <li><b>Flat panorama:</b> sweep in any direction. After each picture, dots appear on the sides, above and below it.</li>
+</ul>
+<p>The camera view shows the pictures you already took as a translucent layer that stays put in space as you turn, so you can see what is covered. White dots mark the places that still need a picture, and an arrow points to the nearest one. Aim the circle at a dot and hold still: the phone shoots by itself (turn <b>Auto</b> off to use the round button instead). <b>Undo</b> deletes the last picture. Tap <b>Done</b> when finished.</p>
+<ul>
+    <li>Every picture is saved to your <b>Downloads</b> folder first, so it also shows up in Google Photos and you can move or delete it later. The browser may ask once to allow several downloads: allow it.</li>
+    <li>The pictures are then placed where the phone's motion sensors say they point and aligned automatically, so you can go straight to blending and baking.</li>
+    <li>The <b>horizon line</b> and the <b>Level / Tilted</b> badge at the top come from the motion sensors: keep the phone level, not tilted sideways.</li>
+    <li>For the pictures straight up or straight down, where you cannot see the screen, <b>Sound</b> guides you: faster beeps mean closer, a quick trill means hold still, and a short tick confirms each picture.</li>
+    <li>The motion sensors drift a little, so the dots may not line up exactly when you come around to the start. The round button shoots anywhere, so take the last picture by eye, using the translucent first picture as a guide.</li>
+    <li>The browser's camera is plainer than your camera app: no HDR or night mode. Turn on <b>Auto</b>, keep the phone upright, and stand still, turning on the spot.</li>
+    <li>The first time, the app guesses the camera's field of view; after an automatic alignment it remembers the real one for next time.</li>
+</ul>
+
+<h3 id="install">Installing and working offline</h3>
+<p>Simple Pano can live on your Home Screen and run without Internet. On Android Chrome open the menu and choose <b>Install app</b> (or <b>Add to Home screen</b>); on an iPhone or iPad use Share, then <b>Add to Home Screen</b>; desktop Chrome shows an install icon in the address bar. After the first visit with a connection, everything the app needs is kept on the device. Whenever there is a connection, the newest version from the server is used and kept for next time, so updates arrive by themselves. Only the AI fill needs Internet (or your own server).</p>
+
+<h2 id="screen">The screen</h2>
+<p>The main view shows the stitch live as you look around. The three-bar button (☰) in the top left corner is always there: it shows all the other buttons, or hides them, and they stay as they are until you press it again. Full screen and loading a background panorama hide them for you. On a phone the labels are shorter (<b class="ui">Background</b>, <b class="ui">Add photos</b>) and the explanatory text is left out. The buttons:</p>
+<table>
+    <tr><th>Button</th><th>What it does</th></tr>
+    <tr><td><b class="ui">Load Background Pano</b></td><td>Shows an existing panorama behind the photos, or alone. A bake puts its result here too. A picture that is not 2:1 is not wrapped on the sphere: one whose left and right edges continue into each other is shown as a full cylinder, a wide one as a cylindrical panorama, and any other as a flat photo (for looking at only; retouching needs a 2:1 panorama). Like the other open buttons, it shows all files, from any location.</td></tr>
+    <tr><td><b class="ui">Add Stitch Image(s)</b></td><td>Adds the photos to stitch.</td></tr>
+    <tr><td><b class="ui">Mode: Look / Move photos</b></td><td>Shown on touch screens, which have no right button: switches one finger between turning the view and moving a photo.</td></tr>
+    <tr><td><b class="ui">Edit</b></td><td>Shows or hides the panel with the steps 1 Align, 2 Retouch and 3 Bake, and the Options.</td></tr>
+    <tr><td><b class="ui">Full</b>, <b class="ui">Gyro</b></td><td>Full screen; steering the view by moving a phone or tablet.</td></tr>
+    <tr><td><b class="ui">Help</b></td><td>This page (also <kbd>F1</kbd>).</td></tr>
+</table>
+<p>In the main view: <b>left button</b> turns the view (a click on a photo selects it), <b>right button</b> drags the selected photo, the <b>wheel</b> zooms.</p>
+
+<h2 id="align">1 · Align</h2>
+<p><b class="ui">Auto-align all</b> finds matching details between all the photos, then works out where each photo points, the field of view of the lens and its distortion. It also sets how bright each photo should be, so exposure differences mostly disappear, and a <b>blend priority</b> from how well each photo fits. It takes from seconds to a few minutes for a large set.</p>
+<p>After it, the outlines of the photos are drawn (Options → Display and blending → <b class="ui">Show image outlines</b>). A photo that could not be placed (a featureless sky, for example) stays where it was: place it by hand.</p>
+
+<h3 id="manual">Placing photos by hand</h3>
+<ul>
+    <li>Click a photo to select it; drag it with the <b>right button</b>. With <b class="ui">Snap when I release a dragged image</b> on, it jumps onto its matches when you let go within 20° of them; hold <kbd>Shift</kbd> while dragging for fine moves without snapping.</li>
+    <li><b class="ui">Snap selected</b> moves the selected photo to where it agrees best with the photos it overlaps.</li>
+    <li>Options → <b class="ui">Manual positioning</b> has the exact angles: Yaw (heading), Pitch (up and down) and Roll (turn). The arrow keys change yaw and pitch, <kbd>[</kbd> and <kbd>]</kbd> the roll, by 0.1° (1° with <kbd>Shift</kbd>).</li>
+    <li>In Options → <b class="ui">Images</b>, clicking a photo selects it and turns to it; <kbd>Shift</kbd>+click a second one to swap the positions of the two. <b class="ui">Flip poles</b> exchanges the straight-up and straight-down photos when they ended up swapped.</li>
+    <li>Untick <b class="ui">Include in stitch</b> to leave a photo out; <b class="ui">Remove Image</b> takes it away.</li>
+    <li>Options → <b class="ui">Lens</b>: the field of view across the long side of the photo. Auto-align estimates it; set it by hand only if alignment keeps failing.</li>
+</ul>
+
+<h3 id="front">Front and horizon</h3>
+<p><b class="ui">Set front to this view</b>: turn the main view to what should be in the middle of the baked image, and press it. <b class="ui">Straighten the horizon</b>: click two points on the horizon, far apart; the whole panorama is turned to make it level (<b class="ui">Undo straightening</b> turns it back). Both turn the photos, the patches and the background panorama together.</p>
+
+<h3 id="poses">Saving your work</h3>
+<p><b class="ui">Save Poses</b> downloads a small file with the position of every photo, the lens and the settings, and the brush-out masks. To continue later, add the same photos and press <b class="ui">Load Poses</b>: photos are matched by file name. This also lets you edit a photo in another program (say, Simple Photo) and bring it back in the same place: keep the file name.</p>
+
+<h2 id="blend">Blending</h2>
+<p>Options → Display and blending → <b class="ui">Blend sharpness</b> decides how overlaps are mixed. At 1 the photos are simply averaged, which gives soft transitions but doubles anything that moved or anything near the camera. Higher values let each detail come mostly from one photo, which removes double edges; very high values may show small steps at the seams. The default (6) suits most sets.</p>
+<p><b>Blend priority</b> (Manual positioning) lets one photo win more of its overlaps: raise it for the sharpest or best-exposed photo. With a photo selected, <kbd>Shift</kbd>+wheel over it or the <kbd>+</kbd> and <kbd>-</kbd> keys change it.</p>
+
+<h2 id="retouch">2 · Retouch</h2>
+<p>Retouching is optional and comes after aligning. There are three kinds:</p>
+<ul>
+    <li><b>Brushing out</b> part of a photo, so the overlapping photos show through there. Nothing is invented; this is the best fix for ghosts and people, wherever another photo saw the same place without them.</li>
+    <li><b>Patches</b> over the stitched photos: a fill (local or AI) of something to remove or a gap with no photo. They are included when you bake.</li>
+    <li><b>Edits of the background panorama</b>, after a bake or on a loaded panorama: fills, and brushes such as Light, Clone or Color, painted into the panorama itself.</li>
+</ul>
+
+<h3 id="brushout">Brush out in the main view</h3>
+<p>Press <b class="ui">Brush out here</b>, select a photo (it is shown solid, so you can see what it contributes) and paint over the ghost or person in it: the other photos show through at once. Select the next photo to brush it too. <b class="ui">Brush size</b> is in degrees; <kbd>[</kbd> and <kbd>]</kbd> change it. <b class="ui">Erase mode</b>, or holding <kbd>Alt</kbd>, gives the paint back. <b class="ui">Clear mask</b> and <b class="ui">Clear all masks</b> remove the paint of one or all photos.</p>
+
+<h3 id="window">The retouch window</h3>
+<p><b class="ui">Retouch window…</b> (on the photos) and <b class="ui">Retouch the background pano…</b> open a large, undistorted view of part of the panorama. Choose where it opens with <b class="ui">View</b> (where you are looking, straight down for the tripod and your feet, or straight up) and how wide with <b class="ui">Width °</b>: a smaller width gives more detail.</p>
+<ul>
+    <li><b>Moving around:</b> drag with the right or middle button (or <kbd>Space</kbd>+left) to pan over the whole panorama; the wheel zooms; <b class="ui">Reset view</b> (<kbd>Home</kbd>) goes back to where you started.</li>
+    <li><b>Painting:</b> the left button paints. <b class="ui">Brush</b> sets its size (also <kbd>[</kbd> <kbd>]</kbd> or <kbd>Alt</kbd>+wheel). <b class="ui">Erase / take back</b>, or holding <kbd>Alt</kbd> or <kbd>Shift</kbd>, removes paint. <b class="ui">Clear</b> removes all of it. <b class="ui">Magnifier</b> shows an enlarged view beside the pointer; <b class="ui">Shade paint</b> tints the painted area.</li>
+    <li><b class="ui">Mark uncovered</b> paints over every spot that no photo covers (black), ready to fill.</li>
+    <li>On the photos there are two choices: <b class="ui">Fill the painted area</b> or <b class="ui">Brush out of a photo</b>, which works like brushing out in the main view but in this larger view.</li>
+    <li>Press <b class="ui">Done</b> to close the window, keeping the results that are ticked in the list. <b class="ui">Close</b> closes it too; nothing that was made is lost.</li>
+</ul>
+
+<h3 id="fill">Fill: local and AI</h3>
+<p>Paint over what should go, a little beyond its edges. <b class="ui">Fill with</b> chooses how it is filled:</p>
+<ul>
+    <li><b>Local edit (no AI, free):</b> texture from around the painted area is copied in, on this computer. Best for floors, grass, sky, walls and the tripod's shadow. The fill is made as soon as you lift the mouse; <b class="ui">Undo last</b> (<kbd>Ctrl</kbd>+<kbd>Z</kbd>) takes it back. To fill an area you marked with the Mask tool, press <b class="ui">Fill</b>.</li>
+    <li><b>An AI provider:</b> for objects and structure: a person in front of a building, a missing corner, a whole gap of sky with clouds. Write what should happen in <b class="ui">What should it do?</b>. AI spots wait in a queue (next section).</li>
+</ul>
+
+<h3 id="queue">AI spots and the queue</h3>
+<p>An AI spot often takes several strokes, so it is not sent when you lift the mouse. It is <b>queued</b> when you press <kbd>Enter</kbd>, when you pan or zoom to another place, or when you send. Queued spots show an <b style="color:#fbbf24">amber</b> outline and number. Mark as many as you like, each with its own prompt, then press <b class="ui">Send to AI</b>: all the waiting spots (and the one being painted) go in <b>one request</b>, so one charge. Each result goes straight into the list with a <b style="color:#7CFC00">green</b> outline and number; untick any you do not want. A spot that failed stays in the queue; Send again retries it. The ✕ beside a queued spot removes it.</p>
+
+<h3 id="tools">Tools for the background panorama</h3>
+<p>In the window on the background panorama, a column of tools appears at the left:</p>
+<table>
+    <tr><th>Tool</th><th>What it does</th></tr>
+    <tr><td>Mask</td><td>Paints an area without changing anything. The brushes then act only inside it; choose Fill and press <b class="ui">Fill</b> (or Send) to fill it.</td></tr>
+    <tr><td>Restore</td><td>Takes back every change on the pixels you paint, back to the panorama as it was before the edits in the list.</td></tr>
+    <tr><td>Fill</td><td>Local or AI fill, as above.</td></tr>
+    <tr><td>Clone</td><td><kbd>Alt</kbd>+click the spot to copy from (a dashed circle marks it), then paint where it should go; the copy follows the brush. For a broken line or a doubled detail at a seam.</td></tr>
+    <tr><td>Paint, Picker</td><td>Paints in a color. The Picker takes a color from the picture: the ring around the pointer shows it; click, then choose Paint.</td></tr>
+    <tr><td>Focus</td><td>Plus sharpens, minus blurs (a stretched pole, noise, a stitching defect).</td></tr>
+    <tr><td>Clarity</td><td>Mid-tone contrast over a wide radius: texture in stone, rust, brick.</td></tr>
+    <tr><td>Light</td><td>Plus lightens, minus darkens. With a large, very soft brush and a small Amount it evens out a band or a patch of uneven exposure.</td></tr>
+    <tr><td>Color</td><td>Plus stronger colors, minus fades toward gray (−100% is gray).</td></tr>
+    <tr><td>Contrast, Warmth</td><td>More or less contrast; warmer or cooler.</td></tr>
+</table>
+<p><b class="ui">Amount</b> is the strength (<kbd>Shift</kbd>+wheel), <b class="ui">Softness of the edge</b> how far the change fades out beyond the paint, <b class="ui">Radius</b> the size of the detail for Focus and Clarity.</p>
+
+<h3 id="modes">Apply on release, Live, Preview first</h3>
+<p>For the brushes, <b class="ui">When to make the change</b>:</p>
+<ul>
+    <li><b class="ui">Apply on release</b> (the default): the change is made as soon as you lift the mouse.</li>
+    <li><b class="ui">Live</b>: the same, but you see the result while you paint, without the paint over it. On a very large view it falls back to Apply on release.</li>
+    <li><b class="ui">Preview first</b>: the result is shown, but not made. Move Amount or the other sliders and it follows; hold <kbd>X</kbd>, or point at <b class="ui">Preview</b>, to hide the paint and judge it. <b class="ui">Accept</b> (<kbd>Enter</kbd>) makes it; <b class="ui">Discard</b> (<kbd>Esc</kbd>) drops it and keeps the paint.</li>
+</ul>
+<p><kbd>E</kbd> cycles through the three. With Apply on release, painting with <b class="ui">Erase / take back</b> (or <kbd>Alt</kbd>) takes back the last change on those pixels.</p>
+
+<h3 id="list">The list of results</h3>
+<p>Every patch and every edit is listed in the window, with the number shown on the picture. Tick to keep, untick to take it out (the later edits are kept), click a name to go there, ✕ to delete it for good. <b class="ui">Outline the areas edited so far</b> shows or hides the green outlines. <b class="ui">Undo last</b> (<kbd>Ctrl</kbd>+<kbd>Z</kbd>) first clears unmade paint, then takes the last spot out of the queue, then takes back the last edit. The background panorama keeps the last 16 edits undoable; older ones stay in the picture for good.</p>
+
+<h3 id="logo">A logo at the nadir</h3>
+<p>Step 2 → <b>D</b> covers the tripod and your shadow with a logo or a round picture, as if it lay on the floor under the camera. <b class="ui">Choose logo…</b>: a PNG with a transparent background keeps its shape; for a photo or a plain disc tick <b class="ui">Round, with a soft edge</b>. <b class="ui">Size °</b> is its width as seen from the camera, <b class="ui">Turn °</b> turns it, <b class="ui">Opacity %</b> (5 to 100) lets the floor show through. <b class="ui">Place logo</b> puts it in (again: replaces it), <b class="ui">Remove logo</b> takes it away. It goes into the background panorama if there is one (save the panorama afterwards), otherwise over the photos, and it is included when you bake. The top of the logo points to the middle of the panorama image.</p>
+
+<h2 id="bake">3 · Bake</h2>
+<ul>
+    <li><b class="ui">Output</b>: <i>Whole sphere</i> is the usual 360° equirectangular image, twice as wide as it is high, at 4096 to 16384 pixels wide. Use 4096 on phones and tablets; the panel shows the native resolution of your photos.</li>
+    <li><b class="ui">Crop away empty edges</b> (whole sphere): the saved JPEG leaves out the black borders where no photo reaches, such as the uneven top and bottom of a 360° band. The file records where the cropped picture sits on the sphere, so viewers still show it correctly. Untick it to keep the full 2:1 image.</li>
+    <li><i>Window, rectilinear</i> keeps straight lines straight, like one very wide photo: for a building or a room wall. <i>Window, cylindrical</i> suits wide landscapes (very wide rectilinear windows stretch the edges). The window is centered on where the main view looks, and kept level; set its <b class="ui">Width</b> and <b class="ui">Height</b> in degrees and the output width in pixels.</li>
+    <li><b class="ui">Made from</b>: the photos with their patches, or the background panorama with its retouching.</li>
+    <li><b class="ui">Bake panorama</b> renders it and downloads a JPEG. Whole spheres carry panorama metadata, so viewers show them as 360° images. After a bake the result is shown on top as the background panorama, ready to check and retouch.</li>
+</ul>
+
+<h2 id="bg">Background panoramas</h2>
+<p>A background panorama is a finished 360° image: a bake, or one you load with <b class="ui">Load Background Pano</b> (from Simple Pano, a phone or another program). It should be 2:1 (equirectangular). Other shapes, such as a phone's wide panorama or an ordinary photo, are shown as a cylinder or flat, to look at only. It can be shown behind the photos for comparison, in front of them (Display and blending → <b class="ui">Show the background panorama on top</b>), or alone (untick <b class="ui">Show the stitched photos</b>). Retouch it with <b class="ui">Retouch the background pano…</b>, then <b class="ui">Save modified pano</b> (or the 💾 button at the top) writes it with its edits. <b class="ui">✕ Remove background</b> takes it away.</p>
+
+<h2 id="ai">AI providers</h2>
+<ul>
+    <li><b>OpenAI, Google Gemini, OpenRouter:</b> online, with your own API key pasted in the window. The key stays in this browser (<b class="ui">Remember the key on this device</b>; <b class="ui">Forget saved keys</b> removes it). Only the view and the painted area are sent. <b class="ui">List</b> shows the image models your key can use. These follow orders: "remove the person", "continue the railing".</li>
+    <li><b>Stable Diffusion on this computer</b> (AUTOMATIC1111 or Forge, started with <code>--api --cors-allow-origins=*</code>): free and private. It redraws from a description, so describe how it should look ("empty stone floor"), not what to remove. Steps and Guidance set speed and faithfulness.</li>
+    <li><b>Ollama</b> (optional, with Stable Diffusion): a vision model such as <code>llama3.2-vision</code> writes the prompt from the picture (<b class="ui">Write the prompt from the picture</b>). Set <code>OLLAMA_ORIGINS=*</code> before starting it.</li>
+    <li><b class="ui">Match color to surroundings</b> shifts the AI result so its brightness and color agree with what is around it. Leave it on unless the change is meant to alter the colors.</li>
+</ul>
+
+<h2 id="keys">Keyboard and mouse</h2>
+<table>
+    <tr><th colspan="2">Main view</th></tr>
+    <tr><td>Left drag / right drag / wheel</td><td>Turn the view / move the selected photo / zoom</td></tr>
+    <tr><td><kbd>←</kbd> <kbd>→</kbd> <kbd>↑</kbd> <kbd>↓</kbd>, <kbd>[</kbd> <kbd>]</kbd></td><td>Yaw, pitch, roll of the selected photo by 0.1° (<kbd>Shift</kbd>: 1°)</td></tr>
+    <tr><td><kbd>+</kbd> <kbd>-</kbd>, <kbd>Shift</kbd>+wheel</td><td>Blend priority of the selected photo</td></tr>
+    <tr><td><kbd>Shift</kbd>+click in the Images list</td><td>Swap the positions of two photos</td></tr>
+    <tr><td><kbd>Esc</kbd></td><td>Deselect the photo; leave Brush out</td></tr>
+    <tr><td><kbd>F1</kbd></td><td>This help</td></tr>
+    <tr><th colspan="2">Retouch window</th></tr>
+    <tr><td>Left / right or middle button / wheel</td><td>Paint / pan over the panorama / zoom</td></tr>
+    <tr><td><kbd>[</kbd> <kbd>]</kbd>, <kbd>Alt</kbd>+wheel</td><td>Brush size</td></tr>
+    <tr><td><kbd>Shift</kbd>+wheel</td><td>Amount</td></tr>
+    <tr><td><kbd>Alt</kbd> or <kbd>Shift</kbd> while painting</td><td>Erase (or take back) for that stroke; <kbd>Alt</kbd>+click with Clone sets the source</td></tr>
+    <tr><td><kbd>Enter</kbd></td><td>Accept the result; with AI paint, queue the spot</td></tr>
+    <tr><td><kbd>Esc</kbd></td><td>Drop the result, then clear the paint, then close the window</td></tr>
+    <tr><td><kbd>Ctrl</kbd>+<kbd>Z</kbd> (<kbd>Cmd</kbd>+<kbd>Z</kbd>)</td><td>Undo last</td></tr>
+    <tr><td><kbd>E</kbd></td><td>Cycle Apply on release, Live, Preview first</td></tr>
+    <tr><td><kbd>X</kbd> (hold)</td><td>Hide the paint</td></tr>
+    <tr><td><kbd>Home</kbd></td><td>Back to the first view</td></tr>
+</table>
+
+<h2 id="recipes">Recipes</h2>
+
+<div class="recipe">
+<h3>Your first 360° panorama from phone photos</h3>
+<ol>
+    <li>Stand still and turn the phone around its lens: a row of about 8 photos level with the horizon, a row of 6 tilted up and one of 6 tilted down, one straight up and one or two straight down (one with your feet moved aside helps later).</li>
+    <li>Add all of them, open Edit and press <b class="ui">Auto-align all</b>.</li>
+    <li>Look all around. If a photo is out of place, see the next recipe.</li>
+    <li>Turn the view to what should be the front and press <b class="ui">Set front to this view</b>. If the horizon tilts, press <b class="ui">Straighten the horizon</b> and click two points on it.</li>
+    <li>Press <b class="ui">Save Poses</b> to keep the alignment, then <b class="ui">Bake panorama</b> at 8192 (4096 on a phone).</li>
+</ol>
+</div>
+
+<div class="recipe">
+<h3>A photo landed in the wrong place</h3>
+<ol>
+    <li>Click it to select it, drag it with the right button near to where it belongs and let go: it snaps onto its matches.</li>
+    <li>If it does not snap (a plain sky has nothing to match), place it by eye and fine-tune it with the arrow keys and <kbd>[</kbd> <kbd>]</kbd>.</li>
+    <li>If two photos traded places, select one in Options → Images and <kbd>Shift</kbd>+click the other. If the straight-up and straight-down photos are swapped, press <b class="ui">Flip poles</b>.</li>
+</ol>
+</div>
+
+<div class="recipe">
+<h3>Double edges where photos overlap</h3>
+<ol>
+    <li>Raise <b class="ui">Blend sharpness</b> (Display and blending) a little: each detail then comes from one photo.</li>
+    <li>If a near object is still doubled, select the photo that shows it best and raise its <b>blend priority</b> (<kbd>+</kbd>, or <kbd>Shift</kbd>+wheel over it).</li>
+    <li>For a small area, brush the doubled part out of the worse photo (<b class="ui">Brush out here</b>).</li>
+</ol>
+</div>
+
+<div class="recipe">
+<h3>A person or a car appears twice, or cut in half</h3>
+<ol>
+    <li>Press <b class="ui">Brush out here</b> and select the photo that shows the person.</li>
+    <li>Paint over the person, with a margin. The other photos show through: if one of them saw the place empty, the person is gone.</li>
+    <li>If no other photo saw it empty, use the retouch window instead: paint over it and fill it (local for a plain background, AI for anything with structure).</li>
+</ol>
+</div>
+
+<div class="recipe">
+<h3 id="r-darksky">A patch of sky came out too dark (the sun was in the shot)</h3>
+<p>With automatic exposure, the photo that faced the sun is darker. Alignment evens out whole photos, but not a patch inside one.</p>
+<ol>
+    <li>If other photos cover the same sky, brush the dark part out of that photo (<b class="ui">Brush out here</b>): the brighter neighbors fill it, and nothing is invented.</li>
+    <li>Where only that photo covers the sky, bake first, then press <b class="ui">Retouch the background pano…</b> and turn the window to the patch.</li>
+    <li>Choose <b>Light</b> and <b class="ui">Live</b>. Make the brush large (<kbd>Alt</kbd>+wheel), the edge very soft and the Amount small (+10 to +20 %).</li>
+    <li>Paint over the dark patch in a few light strokes, watching it blend in. Too much: <kbd>Ctrl</kbd>+<kbd>Z</kbd>.</li>
+    <li>If the dark sky also looks bluer or grayer, a stroke of <b>Warmth</b> or <b>Color</b> evens that too. Save the panorama.</li>
+    <li>Alternatively, lighten the sky in that photo in Simple Photo (its graduated adjustments suit a sky that darkens toward the sun), save it under the same name, and reload the photos with <b class="ui">Load Poses</b>.</li>
+</ol>
+</div>
+
+<div class="recipe">
+<h3>Remove the tripod and your feet at the nadir</h3>
+<ol>
+    <li>In step 2 set <b class="ui">View</b> to <i>Straight down (nadir)</i> and press <b class="ui">Retouch window…</b> (or the background version after a bake).</li>
+    <li>Choose <b>Fill</b> with <i>Local edit</i> and paint over the tripod and its shadow: it is filled from the floor around it as you lift the mouse.</li>
+    <li>For a patterned floor (tiles, planks), an AI provider continues the pattern better: paint, write "continue the floor", press <b class="ui">Send to AI</b>.</li>
+    <li>Or simply cover it with a logo (next recipe).</li>
+</ol>
+</div>
+
+<div class="recipe">
+<h3>Cover the nadir with a logo</h3>
+<ol>
+    <li>Bake first if you want the logo in the saved panorama; otherwise it is added to the photos and comes with the next bake.</li>
+    <li>Step 2 → D: <b class="ui">Choose logo…</b>, a round PNG with a transparent background.</li>
+    <li>Set Size ° to cover the tripod (30 to 50°), Turn ° to face it the right way, and Opacity % (around 70 % lets the floor show through).</li>
+    <li>Press <b class="ui">Place logo</b> and look straight down. Change a setting and press it again to replace it.</li>
+</ol>
+</div>
+
+<div class="recipe">
+<h3>Fill the gaps no photo covers</h3>
+<ol>
+    <li>Open the retouch window where the gap is (often straight up or down) and press <b class="ui">Mark uncovered</b>.</li>
+    <li>For sky, choose Fill with <i>Local edit</i> and press <b class="ui">Fill</b>. For anything with structure, choose an AI provider, write "continue the ceiling" (or the sky with clouds), and press <b class="ui">Send to AI</b>.</li>
+</ol>
+</div>
+
+<div class="recipe">
+<h3>Remove several people with one AI request</h3>
+<ol>
+    <li>Open the retouch window, choose an AI provider and paste the key.</li>
+    <li>Paint over the first person, write "remove the person and continue the background", and press <kbd>Enter</kbd>: it is queued (amber number).</li>
+    <li>Pan to the next person (right button) and paint again; panning queues each spot by itself. Each can have its own prompt.</li>
+    <li>Press <b class="ui">Send to AI</b>. All the spots go in one request; the results come back with green numbers. Untick any that did not work, repaint it and send again.</li>
+</ol>
+</div>
+
+<div class="recipe">
+<h3>A broken line or a doubled detail at a seam</h3>
+<ol>
+    <li>After a bake, open <b class="ui">Retouch the background pano…</b> on the spot and choose <b>Clone</b>.</li>
+    <li><kbd>Alt</kbd>+click a clean part of the line next to the break, then paint along the broken part with a small brush: the copy follows at the same distance.</li>
+    <li>For a doubled small detail, Focus at minus or Fill may be quicker.</li>
+</ol>
+</div>
+
+<div class="recipe">
+<h3>A building facade or a wide landscape (not 360°)</h3>
+<ol>
+    <li>Align the photos as usual. Turn the main view to the middle of the subject and straighten the horizon.</li>
+    <li>In step 3 choose <i>Window, rectilinear</i> for buildings (straight lines stay straight) or <i>Window, cylindrical</i> for a long landscape.</li>
+    <li>Set the width and height in degrees to frame it, and the output width; the suggested value matches your photos' resolution.</li>
+    <li>Press <b class="ui">Bake panorama</b>.</li>
+</ol>
+</div>
+
+<div class="recipe">
+<h3>Retouch a panorama made elsewhere</h3>
+<ol>
+    <li>Press <b class="ui">Load Background Pano</b> and choose the 360° JPEG. You do not need any photos.</li>
+    <li>Press <b class="ui">Retouch the background pano…</b>, fix what you need (fills, Light, Clone, a logo), then <b class="ui">Save modified pano</b>.</li>
+</ol>
+</div>
+
+<div class="recipe">
+<h3>Uneven brightness across the whole panorama</h3>
+<ol>
+    <li>Bake it and open the saved JPEG in Simple Photo: Levels, Curves and the other Adjustments work on the whole image without any seam.</li>
+    <li>Avoid effects that spread across the image there (vignette, the graduated filter, large-radius clarity): they can show a seam where the left and right edges of a 360° image meet. Do local work in the retouch window instead.</li>
+</ol>
+</div>
+
+<h2 id="touch">On a phone or tablet</h2>
+<p>There is no mouse and no keyboard, so the text on the screen changes to say what to touch. In short:</p>
+<ul>
+    <li><b>Main view:</b> one finger turns the view, two fingers zoom. Tap a photo to select it. <b class="ui">Mode: Move photos</b> lets one finger move the selected photo; <b class="ui">Mode: Look</b> goes back.</li>
+    <li><b>Buttons:</b> the three-bar button (☰) in the corner shows and hides all the other buttons. The <b class="ui">Edit</b> panel takes part of the screen; its ✕ closes it.</li>
+    <li><b>Retouch window:</b> one finger paints. Two fingers move and zoom the whole panorama (the brush waits a moment before it paints, so that two fingers landing together do not leave a mark). <b class="ui">Reset view</b> goes back to where you started.</li>
+    <li><b>Brush size:</b> move the <b class="ui">Brush</b> slider and a circle of the real brush size shows in the middle of the view.</li>
+    <li><b>Picker:</b> keep your finger down and drag: the ring above your finger and the <b class="ui">Color</b> box show the color that would be taken. Lift to take it.</li>
+    <li><b>Clone:</b> the first touch marks the spot to copy from, then paint where it should go. <b class="ui">Mark the spot to copy from</b> chooses a new source.</li>
+    <li><b>Erase and take back:</b> use the <b class="ui">Erase / take back</b> choice (a computer uses <kbd>Alt</kbd> or <kbd>Shift</kbd>). <b class="ui">Accept</b>, <b class="ui">Discard</b> and <b class="ui">Undo last</b> are buttons, so no <kbd>Enter</kbd>, <kbd>Esc</kbd> or <kbd>Ctrl</kbd>+<kbd>Z</kbd> is needed.</li>
+</ul>
+
+<h2 id="trouble">Troubleshooting</h2>
+<ul>
+    <li><b>Auto-align says it cannot find pano_features.js or pano_align.js.</b> All the files of Simple Pano must sit together in one folder.</li>
+    <li><b>A photo is not placed.</b> It has too little detail in common with the others (sky, a white wall) or too little overlap. Place it by hand; next time take more overlap.</li>
+    <li><b>On Android, the chooser shows only Photos and Albums.</b> The browser is probably using an old copy of the page. The page shows a small <i>Version</i> line under the title with the date and time <code>index.html</code> was last uploaded; if it is missing or older than your last upload, reload the page, or clear the site's data in Chrome (Settings → Site settings → All sites) and try again. The current page shows Android's full file chooser, whose side menu reaches Google Photos, Downloads and every other place.</li>
+    <li><b>"That file could not be opened as a picture."</b> The file is not a picture, or is in a format the browser cannot read (HEIC photos from iPhones, for example, in most browsers). Convert it to JPEG first.</li>
+    <li><b>The bake fails or the page reloads on a phone or tablet.</b> Use 4096 pixels: larger images need more memory than the browser allows there.</li>
+    <li><b>Retouch says to finish the spot first.</b> A result is waiting: Accept (<kbd>Enter</kbd>), Discard (<kbd>Esc</kbd>), or Clear the paint. Then pan.</li>
+    <li><b>The AI says the key is missing or wrong.</b> Paste it again in the window. Online providers charge per request; Send to AI sends all queued spots in one.</li>
+    <li><b>Stable Diffusion cannot be reached.</b> Start it with <code>--api --cors-allow-origins=*</code> and check the address in the window.</li>
+    <li><b>The retouched background is gone after reloading.</b> Edits of the background panorama live in the page until you save it: press <b class="ui">Save modified pano</b>.</li>
+</ul>
+</main>
+</body>
+</html>

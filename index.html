@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Simple Pano</title>
+    <link rel="manifest" href="manifest.webmanifest">
+    <meta name="theme-color" content="#4f46e5">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-title" content="Simple Pano">
+    <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%234f46e5'/%3E%3Cpath d='M3 12 L20 16 V48 L3 52 Z' fill='%23a5b4fc'/%3E%3Cpath d='M61 12 L44 16 V48 L61 52 Z' fill='%23a5b4fc'/%3E%3Crect x='22' y='14' width='20' height='36' rx='2' fill='%23e0e7ff'/%3E%3Cpath d='M3 43 L10 34 L15 39 L20 32 V48 L3 52 Z' fill='%233730a3'/%3E%3Cpath d='M22 41 L28 32 L33 38 L36 35 L42 41 V48 Q42 50 40 50 H24 Q22 50 22 48 Z' fill='%23312e81'/%3E%3Cpath d='M44 36 L49 41 L54 33 L61 42 V52 L44 48 Z' fill='%233730a3'/%3E%3Ccircle cx='33' cy='24' r='4' fill='%23fbbf24'/%3E%3C/svg%3E">
+    <!-- Styles: pano.css is built from the classes used here and in pano_app.js (see vendor/README.txt) -->
+    <link rel="stylesheet" href="pano.css?v=20261121-2200">
+    <style>
+        #ui-layer { transition: opacity .5s ease, visibility 0s linear 0s; }
+        #ui-layer.ui-off { opacity: 0; visibility: hidden; transition: opacity .5s ease, visibility 0s linear .5s; }
+        #ui-corner { position: fixed; left: 14px; top: 14px; z-index: 12; width: 60px; height: 60px; border-radius: 16px; background: rgba(0,0,0,.35); color: #fff; border: 1px solid rgba(255,255,255,.35); font-size: 32px; line-height: 1; opacity: .6; cursor: pointer; transition: opacity .4s; }
+        @media (max-width: 639px) { #ui-corner { left: 8px; top: 8px; width: 44px; height: 44px; font-size: 24px; border-radius: 12px; } }
+        #ui-corner:hover { opacity: .9; }
+        /* Words for a mouse and keyboard (.kb) and the touch version (.tc): a touch screen (no hover) shows only the second */
+        .tc { display: none !important; }
+        html.touch .tc { display: revert !important; }
+        html.touch .kb { display: none !important; }
+        @media (max-width: 639px) { #ui-head .ui-hint { display: none !important; } }
+        /* Phones and other small screens. The Edit panel leaves part of the view free: the top part in portrait, the left part in
+           landscape. While it is open, the title and the button rows give way (the panel's X closes it, the three-bar button hides all). */
+        @media (max-height: 500px) { #ui-head .ui-hint { display: none !important; } }
+        @media (max-width: 639px), (max-height: 500px) { body.panel-open #ui-head, body.panel-open #ui-bottom { display: none; } }
+        @media (max-width: 639px) { #properties-panel { top: 45vh !important; bottom: .5rem; left: .5rem; right: .5rem; max-height: none !important; padding: .75rem; } }
+        @media (max-height: 500px) and (min-width: 640px) { #properties-panel { top: .5rem !important; bottom: .5rem; right: .5rem !important; left: auto; width: min(24rem, 48vw) !important; max-height: none !important; padding: .75rem; } }
+        #ui-corner.dirty { opacity: .8; }
+        #ui-corner.dirty::after { content: ''; position: absolute; top: 5px; right: 5px; width: 11px; height: 11px; border-radius: 50%; background: #f59e0b; }
+        .fxt { width: 4.9rem; display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 6px 2px; border-radius: 8px; border: 1px solid #4b5563; background: #374151; color: #e5e7eb; font-size: 12.5px; line-height: 1.1; cursor: pointer; }
+        .fxt span { font-size: 22px; line-height: 1.1; }
+        .fxt:hover { background: #4b5563; }
+        .fxt.fxt-on { background: #0d9488; border-color: #99f6e4; color: #fff; }
+        .tog-on { background-color: #16a34a !important; border-color: #bbf7d0 !important; box-shadow: 0 0 0 2px #bbf7d0 !important; color: #fff !important; }
+        body {
+            margin: 0;
+            overflow: hidden;
+            background-color: #000;
+            font-family: 'Inter', sans-serif;
+        }
+        /* Disable touch actions on canvas to prevent pull-to-refresh while panning */
+        #canvas-container {
+            width: 100vw;
+            height: 100vh;
+            touch-action: none;
+            display: block;
+        }
+        .fld { width: 100%; background: #1f2937; border: 1px solid #4b5563; border-radius: 0.25rem; padding: 0.15rem 0.35rem; font-size: 0.8rem; color: #fff; }
+        .fld:focus { outline: none; border-color: #14b8a6; }
+        .lbl { display: block; font-size: 0.7rem; color: #9ca3af; margin-bottom: 0.15rem; }
+        .sec { border-top: 1px solid #4b5563; padding-top: 0.6rem; }
+        .sec h4 { font-size: 0.85rem; font-weight: 700; color: #e5e7eb; margin-bottom: 0.4rem; }
+        details.sec > summary { cursor: pointer; list-style: none; font-size: 0.9rem; font-weight: 700; color: #e5e7eb; padding: 0.1rem 0; user-select: none; }
+        details.sec > summary::-webkit-details-marker { display: none; }
+        details.sec > summary::before { content: '▸'; display: inline-block; width: 1.1em; color: #9ca3af; }
+        details.sec[open] > summary::before { content: '▾'; }
+        details.sec[open] > summary { margin-bottom: 0.45rem; }
+        details.step > summary { font-size: 1rem; color: #5eead4; }
+        /* the retouch window: rows that come and go keep their space, so the controls and the list of results stay where they are */
+        #pd-viewrow[style*="display: none"], #pd-viewrow[style*="display:none"], #pd-chgrow[style*="display: none"], #pd-chgrow[style*="display:none"] { display: flex !important; visibility: hidden; }
+        .optlabel { font-size: 0.7rem; letter-spacing: 0.08em; text-transform: uppercase; color: #6b7280; margin-top: 0.2rem; }
+        .sbtn { width: 100%; font-size: 0.75rem; font-weight: 600; padding: 0.4rem; border-radius: 0.5rem; color: #fff; }
+    </style>
+    <link rel="stylesheet" href="pano_shoot.css?v=1">
+    <script src="pano_shoot.js?v=1"></script>
+</head>
+<body>
+
+<!-- WebGL Target -->
+<div id="canvas-container"></div>
+<style>
+    @keyframes pgslide { 0% { margin-left: -35%; } 100% { margin-left: 100%; } }
+    #progress-bar.indet { animation: pgslide 1.1s linear infinite; }
+</style>
+<div id="mb-cursor" style="display:none; position:fixed; z-index:40; pointer-events:none; border:2px solid #f59e0b; border-radius:50%; transform:translate(-50%,-50%); box-shadow:0 0 0 1px rgba(0,0,0,0.6);"></div>
+<div id="progress" style="display:none; position:fixed; z-index:80; left:50%; top:1.2rem; transform:translateX(-50%); width:min(600px, 88vw); background:rgba(17,24,39,0.96); border:1px solid #14b8a6; border-radius:12px; padding:12px 16px; color:#fff; box-shadow:0 4px 18px rgba(0,0,0,0.6); pointer-events:none;">
+    <div id="progress-text" style="font-size:18px; font-weight:700; margin-bottom:8px;"></div>
+    <div style="height:12px; background:#374151; border-radius:6px; overflow:hidden;"><div id="progress-bar" style="height:100%; width:0; background:#14b8a6; border-radius:6px; transition:width 0.15s;"></div></div>
+    <div id="progress-sub" style="font-size:14px; color:#9ca3af; margin-top:6px;"></div>
+</div>
+<div id="pd-src" style="display:none; position:fixed; z-index:71; pointer-events:none; border:2px dashed #fbbf24; border-radius:50%; transform:translate(-50%,-50%); box-shadow:0 0 0 1px rgba(0,0,0,0.7);"></div>
+<div id="pd-ring" style="display:none; position:fixed; z-index:71; pointer-events:none; border:2px solid #fff; border-radius:50%; transform:translate(-50%,-50%); box-shadow:0 0 0 1px rgba(0,0,0,0.7);"></div>
+<canvas id="pd-loupe" width="220" height="220" style="display:none; position:fixed; z-index:70; pointer-events:none; border:2px solid #fff; border-radius:50%; box-shadow:0 0 10px #000; background:#000;"></canvas>
+<div id="pd-modal" style="display:none; position:fixed; inset:0; z-index:60; background:rgba(0,0,0,0.78); align-items:center; justify-content:center;">
+    <div id="pd-box" class="bg-gray-900 text-white rounded-2xl border border-gray-600 shadow-2xl p-4 flex gap-4" style="position:relative; display:flex; gap:1rem; width:min(1400px, 96vw); height:min(900px, 94vh); min-width:560px; min-height:380px; max-width:98vw; max-height:98vh; overflow:hidden; resize:both;">
+        <div id="pd-tools" style="display:none; width:5.2rem; flex:0 0 auto; overflow-y:auto; flex-direction:column; gap:4px; align-items:center;" title="Tools: choose what the painted area is used for">
+            <button class="fxt" data-op="mask" title="Mask: paint a selection, with no change to the picture. The effect brushes then work only inside it. Choose Fill to fill it or send it to the AI."><span>&#9641;</span>Mask</button>
+            <button class="fxt" data-op="restore" title="Restore: paint back the panorama as it was before the edits in the list (the last 16 are kept)"><span>&#8634;</span>Restore</button>
+            <button class="fxt" data-op="fill" title="Fill: remove or replace what is painted (local fill or AI)"><span>&#10022;</span>Fill</button>
+            <button class="fxt" data-op="clone" title="Clone: Alt + click the spot to copy from, then paint where it should go. For a broken line or a doubled detail at a seam, copy a clean bit from beside it."><span>&#10070;</span>Clone</button>
+            <button class="fxt" data-op="paint" title="Paint in a color"><span>&#9679;</span>Paint</button>
+            <button class="fxt" data-op="pick" title="Color picker: click the picture to take its color"><span>&#8982;</span>Picker</button>
+            <button class="fxt" data-op="sharpen" title="Focus: plus sharpens fine detail, minus blurs"><span>&#9678;</span>Focus</button>
+            <button class="fxt" data-op="clarity" title="Clarity: contrast of the mid-tones over a wide radius, for texture"><span>&#9672;</span>Clarity</button>
+            <button class="fxt" data-op="dodge" title="Light: plus lightens (dodge), minus darkens (burn), with a soft edge. Evens out uneven exposure."><span>&#9728;</span>Light</button>
+            <button class="fxt" data-op="saturation" title="Color: more or less saturation"><span>&#9680;</span>Color</button>
+            <button class="fxt" data-op="contrast" title="Contrast: more or less"><span>&#9681;</span>Contrast</button>
+            <button class="fxt" data-op="warmth" title="Warmth: warmer or cooler"><span>&#9832;</span>Warmth</button>
+        </div>
+        <div style="flex:1 1 auto; min-width:0; display:flex; flex-direction:column;">
+            <button id="pd-max" title="Make this window fill the screen, or go back to its normal size" class="sbtn bg-gray-700 hover:bg-gray-600 border border-gray-500" style="position:absolute; right:14px; top:10px; width:auto; padding:0.2rem 0.7rem; z-index:2;">Full window</button>
+            <h3 id="pd-title" class="font-bold text-lg mb-1"></h3>
+            <div id="pd-view" style="flex:1 1 auto; min-height:0; overflow:auto; display:flex; background:#111; border-radius:6px;">
+            <div id="pd-wrap" style="position:relative; overflow:hidden; background:#000; touch-action:none; flex:0 0 auto; margin:auto;">
+                <canvas id="pd-base" style="position:absolute; left:0; top:0; width:100%; height:100%;"></canvas>
+                <canvas id="pd-cut" style="position:absolute; left:0; top:0; width:100%; height:100%; opacity:0.6; pointer-events:none;"></canvas>
+                <canvas id="pd-chg" style="position:absolute; left:0; top:0; width:100%; height:100%; pointer-events:none; display:none;"></canvas>
+                <canvas id="pd-mask" style="position:absolute; left:0; top:0; width:100%; height:100%; opacity:0.55; cursor:none; touch-action:none;"></canvas>
+            </div>
+            </div>
+            <div id="pd-kindrow" style="display:none;" class="flex items-center gap-3 mt-2 text-xs text-gray-200">
+                <label title="Paint over something to replace it, or over a gap with no photo, and let a local fill or an AI editor draw it"><input type="radio" name="pd-kind" id="pd-kind-fill" checked> Fill the painted area</label>
+                <label title="Paint over a ghost or person: it is removed from the photo that shows it here, so the other photos show through"><input type="radio" name="pd-kind" id="pd-kind-cut"> Brush out of a photo</label>
+            </div>
+            <div class="flex items-center gap-3 mt-2 text-xs text-gray-300">
+                <label title="Size of the brush ( [ and ] keys change it )">Brush <input type="range" id="pd-brush" min="1" max="30" value="4" class="accent-teal-500" style="width:7rem; vertical-align:middle;"></label>
+                <label title="A magnifying glass beside the cursor"><input type="checkbox" id="pd-loupe-chk"> Magnifier</label>
+                <label><input type="radio" name="pd-tool" id="pd-paint" checked> Paint</label>
+                <label title="Hold Alt or Shift while painting to switch between painting and erasing for that stroke. With an effect tool that applies when you lift the mouse, it takes back the last change on those pixels instead."><input type="radio" name="pd-tool" id="pd-erase"> Erase / take back</label>
+                <label title="Tint the painted area. It is lighter while a fill result is shown, and off if you untick this"><input type="checkbox" id="pd-paintshow" checked> Shade paint</label>
+                <button id="pd-clear" class="sbtn bg-gray-700 hover:bg-gray-600 border border-gray-500" style="width:auto; padding:0.2rem 0.7rem;">Clear</button>
+                <button id="pd-home" title="Go back to the view this window opened with: same direction, same horizon, same width (Home key)" class="sbtn bg-gray-700 hover:bg-gray-600 border border-gray-500" style="width:auto; padding:0.2rem 0.7rem; display:none;">Reset view</button>
+                <button id="pd-uncov" title="Paint over every spot that no photo covers (black here), so it can be filled" class="sbtn bg-gray-700 hover:bg-gray-600 border border-gray-500" style="width:auto; padding:0.2rem 0.7rem; display:none;">Mark uncovered</button>
+            </div>
+            <p class="kb text-[11px] text-gray-400 mt-1">Left button paints. Right or middle button (or Space + left) drags over the whole panorama; the wheel zooms in and out; Reset view (or Home) goes back to where you started. [ and ] or Alt + wheel change the brush size, Shift + wheel the Amount. Enter accepts a result, Esc drops it (then clears the paint, then closes), Ctrl + Z is Undo last. Hold X (or point at Preview) to hide the paint; E switches when an effect is made. Drag the lower right corner to resize this window.</p>
+            <p class="tc text-[11px] text-gray-400 mt-1">One finger paints. Two fingers move and zoom the whole panorama; Reset view goes back to where you started. The Brush slider shows the size of the brush while you move it. Accept keeps a result and Discard drops it; Undo last takes back the last change. Drag the lower right corner to resize this window.</p>
+        </div>
+        <div style="width:17rem; flex:0 0 auto; overflow-y:auto; overflow-anchor:none;" class="flex flex-col gap-2">
+            <p id="pd-cuthelp" class="text-xs text-gray-300" style="display:none;"></p>
+            <div id="pd-fx" style="display:none;" class="flex flex-col gap-2">
+                <select id="pd-op" style="display:none;">
+                    <option value="fill">Fill</option><option value="mask">Mask</option><option value="restore">Restore</option><option value="clone">Clone</option><option value="paint">Paint</option><option value="pick">Picker</option><option value="sharpen">Focus</option><option value="clarity">Clarity</option>
+                    <option value="dodge">Light</option><option value="saturation">Color</option><option value="contrast">Contrast</option><option value="warmth">Warmth</option>
+                </select>
+                <div id="pd-toolname" class="text-sm font-bold text-teal-200"></div>
+                <div id="pd-fxopts" style="display:none;" class="flex flex-col gap-2">
+                    <div id="pd-amt-row"><div class="flex justify-between"><label class="lbl">Amount</label><span id="pd-amt-val" class="text-xs text-teal-300 font-bold"></span></div>
+                        <input type="range" id="pd-amt" min="5" max="300" value="100" class="w-full accent-teal-500"></div>
+                    <div id="pd-rad-row"><div class="flex justify-between"><label class="lbl">Radius (panorama pixels)</label><span id="pd-rad-val" class="text-xs text-teal-300 font-bold"></span></div>
+                        <input type="range" id="pd-rad" min="0.5" max="4" step="0.5" value="1.5" class="w-full accent-teal-500"></div>
+                    <div id="pd-soft-row"><div class="flex justify-between"><label class="lbl">Softness of the edge</label><span id="pd-soft-val" class="text-xs text-teal-300 font-bold"></span></div>
+                        <input type="range" id="pd-soft" min="0" max="100" value="60" class="w-full accent-teal-500"></div>
+                    <div id="pd-src-row" style="display:none;"><button id="pd-mark-src" class="sbtn border bg-gray-700 hover:bg-gray-600 border-gray-500" title="Then touch or click the spot to copy from (Alt + click does the same)">Mark the spot to copy from</button></div>
+                    <div id="pd-color-row" style="display:none;"><label class="lbl">Color <input type="color" id="pd-color" value="#000000" style="width:2.6rem; height:1.6rem; padding:0; vertical-align:middle;"></label></div>
+                    <div id="pd-auto-row" class="text-xs text-gray-300" title="When the change is made. Apply on release: as soon as you let go (Undo last takes it back). Live: the same, but the result shows while you paint. Preview first: the result is shown and Accept keeps it. E cycles through the three.">
+                        <div class="mb-1">When to make the change</div>
+                        <div class="flex flex-wrap gap-x-3 gap-y-1">
+                            <label><input type="radio" name="pd-apm" id="pd-am-apply" checked> Apply on release</label>
+                            <label id="pd-am-live-lbl" title="The result shows while you paint (without the paint over it) and is made when you let go"><input type="radio" name="pd-apm" id="pd-am-live"> Live</label>
+                            <label><input type="radio" name="pd-apm" id="pd-am-prev"> Preview first</label>
+                        </div>
+                    </div>
+                    <p id="pd-fxnote" class="text-[10px] text-gray-500"></p>
+                </div>
+            </div>
+            <div id="pd-ai" style="display:none;" class="flex flex-col gap-2">
+                <div><label class="lbl">Fill with</label><select id="pd-provider" class="fld"></select></div>
+                <div id="pd-airows" class="flex flex-col gap-2">
+                <div id="pd-keyrow"><label class="lbl">API key <span id="pd-keyhint" class="text-teal-300"></span></label>
+                    <input type="password" id="pd-key" autocomplete="off" placeholder="paste key, it stays in this browser" class="fld"></div>
+                <div><label class="lbl">Image model</label>
+                    <div class="flex gap-1"><input type="text" id="pd-model" class="fld"><button id="pd-models-btn" title="Ask the provider which image models your key can use" class="sbtn bg-gray-700 hover:bg-gray-600 border border-gray-500" style="width:auto; padding:0.1rem 0.5rem;">List</button></div>
+                    <select id="pd-model-list" class="fld mt-1" style="display:none;"></select></div>
+                <label id="pd-remrow" class="flex items-center gap-2 text-xs text-gray-300"><input type="checkbox" id="pd-remember" checked> Remember the key on this device</label>
+                <div id="pd-sdrow" style="display:none;" class="flex flex-col gap-2">
+                    <div><label class="lbl">Address of the Stable Diffusion WebUI</label><input type="text" id="pd-sdbase" class="fld" placeholder="http://127.0.0.1:7860"></div>
+                    <div><label class="lbl">Size at which the painted area is redrawn</label>
+                        <select id="pd-sdsize" class="fld"><option value="512">512 (SD 1.5 models)</option><option value="768">768</option><option value="1024">1024 (SDXL models)</option></select></div>
+                    <div class="flex gap-2">
+                        <div class="w-1/2"><label class="lbl" title="Number of denoising steps: the time of an edit is in proportion. Normal models: 20 to 30. Lightning or Turbo models: 4 to 8.">Steps</label><input type="number" id="pd-sdsteps" class="fld" min="1" max="60" value="28"></div>
+                        <div class="w-1/2"><label class="lbl" title="How closely the prompt is followed. Normal models: 5 to 8. Lightning or Turbo models: 1 to 2.">Guidance (CFG)</label><input type="number" id="pd-sdcfg" class="fld" min="1" max="12" step="0.5" value="6.5"></div>
+                    </div>
+                    <details class="text-xs text-gray-300"><summary class="cursor-pointer">Ollama: let a vision model describe the scene</summary>
+                        <div class="flex flex-col gap-2 mt-1">
+                            <input type="text" id="pd-olbase" class="fld" placeholder="http://127.0.0.1:11434">
+                            <div class="flex gap-1"><input type="text" id="pd-olmodel" list="pd-olmodels" class="fld" placeholder="vision model, e.g. llama3.2-vision"><datalist id="pd-olmodels"></datalist>
+                                <button id="pd-ollist" title="Ask Ollama which models are installed" class="sbtn bg-gray-700 hover:bg-gray-600 border border-gray-500" style="width:auto; padding:0.1rem 0.5rem;">List</button></div>
+                            <button id="pd-describe" title="Ollama looks at the painted spot and its surroundings and writes the prompt below" class="sbtn bg-gray-700 hover:bg-gray-600 border border-gray-500">Write the prompt from the picture</button>
+                        </div></details>
+                </div>
+                </div>
+                <div id="pd-promptrow"><label class="lbl">What should it do?</label>
+                    <textarea id="pd-prompt" rows="4" class="fld" placeholder="Remove the person and continue the floor, as if no one was there."></textarea></div>
+                <label class="flex items-center gap-2 text-xs text-gray-300" title="Shifts the AI picture so its brightness and color agree with the surroundings of the painted area"><input type="checkbox" id="pd-match" checked> Match color to surroundings</label>
+                <div class="flex gap-2">
+                    <button id="pd-run" class="sbtn bg-violet-600 hover:bg-violet-500 border border-violet-400">Run</button>
+                    <button id="pd-discard" title="Drop the result that is shown. The paint stays, so you can change the settings and press Preview again." class="sbtn bg-gray-700 hover:bg-gray-600 border border-gray-500" style="display:none;" disabled>Discard</button>
+                    <button id="pd-queue" title="Keep this painted spot for later and clear the paint, so you can mark the next spot. All queued spots are then sent to the AI together, in one request (and so one charge)." class="sbtn bg-gray-700 hover:bg-gray-600 border border-gray-500">Add to queue</button>
+                    <button id="pd-stop" class="sbtn bg-gray-700 hover:bg-gray-600 border border-gray-500" style="display:none;">Stop</button>
+                </div>
+                <button id="pd-runq" style="display:none;" title="Send all queued spots now, in one AI request" class="sbtn bg-fuchsia-700 hover:bg-fuchsia-600 border border-fuchsia-400">Run queued</button>
+                <label id="pd-chgrow" class="flex items-center gap-2 text-xs text-gray-300" style="display:none;" title="Outline, in green, the areas of this view that retouching has changed"><input type="checkbox" id="pd-chgshow" checked> Outline the areas edited so far</label>
+                <label id="pd-viewrow" class="flex items-center gap-2 text-xs text-gray-300" style="display:none;"><input type="checkbox" id="pd-show" checked> Show the AI result (untick for the original)</label>
+                <div id="pd-ainote" class="flex flex-col gap-2">
+                <button id="pd-forget" class="text-[10px] text-gray-500 hover:text-gray-300 text-left" title="Forget the saved API keys and settings on this device">Forget saved keys</button>
+                <p id="pd-sendnote" class="text-[10px] text-gray-500">Only this view and the painted area are sent to the provider you chose, together with your prompt.</p>
+                </div>
+                <p id="pd-localnote" class="text-[10px] text-gray-500">Local fill copies texture from around the painted area, like a content-aware fill. Nothing leaves this computer. Best for floors, grass, sky and walls; for objects or structure use an AI provider.</p>
+            </div>
+            <p id="pd-help" class="text-xs text-gray-300"></p>
+            <p id="pd-status" class="text-sm text-teal-200" style="white-space:pre-wrap; height:7rem; overflow-y:auto; flex:0 0 auto;"></p>
+            <div class="flex flex-col gap-2" style="margin-top:auto; overflow-anchor:none;">
+            <div id="pd-edits-box" style="display:none;">
+                <div class="text-xs text-gray-300 mb-1">Spots and results (the number is shown on the picture): tick to keep, untick to take out, click a name to go there.</div>
+                <div id="pd-edits" style="max-height:9rem; overflow-y:auto; font-size:0.85rem;"></div>
+            </div>
+            <div class="flex gap-2">
+                <button id="pd-ok" class="sbtn bg-gray-700 hover:bg-gray-600 border border-gray-500">Done</button>
+                <button id="pd-undo" title="Clear the paint on this view; if there is none, take the last queued spot out of the queue; then take back the last edit of the background panorama" class="sbtn bg-gray-700 hover:bg-gray-600 border border-gray-500">Undo last</button>
+                <button id="pd-cancel" title="Close this window. The queue and patches are kept." class="sbtn bg-gray-700 hover:bg-gray-600 border border-gray-500">Close</button>
+            </div>
+            </div>
+        </div>
+    </div>
+</div>
+<div id="fit-badge" style="display:none; position:fixed; z-index:30; left:50%; bottom:6rem; transform:translateX(-50%); pointer-events:none; color:#fff; border-radius:10px; padding:6px 18px; font-size:17px; font-weight:700; white-space:nowrap; box-shadow:0 2px 8px rgba(0,0,0,0.5);"></div>
+<div id="hover-label" style="display:none; position:fixed; z-index:30; pointer-events:none; background:rgba(0,0,0,0.75); color:#7be8ff; border:1px solid #35e0ff; border-radius:6px; padding:3px 10px; font-size:15px; font-weight:600; white-space:nowrap;"></div>
+
+<!-- The three-bar button stays in the corner: it shows and hides all the others -->
+<button id="ui-corner" title="Show or hide the buttons" aria-label="Show or hide the buttons">&#9776;</button>
+<!-- Messages (outside the layer of buttons, so they show even when the buttons are hidden) -->
+<div id="message-box" class="hidden fixed left-1/2 -translate-x-1/2 bottom-28 z-20 max-w-[92vw] bg-gray-900/90 text-white px-4 py-2 sm:px-5 sm:py-3 rounded-xl shadow-xl backdrop-blur-md pointer-events-none text-center font-semibold text-base sm:text-lg transition-opacity"></div>
+<!-- Overlay UI -->
+<div id="ui-layer" class="absolute inset-0 pointer-events-none flex flex-col justify-between p-3 sm:p-6 z-10 transition-opacity duration-500 opacity-100">
+    <div id="ui-head" class="flex flex-col gap-2 sm:flex-row sm:justify-between sm:items-start w-full">
+        <div class="ml-14 sm:ml-20 sm:max-w-sm">
+            <h1 class="text-white text-xl sm:text-3xl font-extrabold drop-shadow-lg tracking-tight">Simple Pano</h1>
+            <p class="ui-hint hidden sm:block text-teal-200 text-sm drop-shadow-md font-medium mt-1">Add photos, press Auto-Align, then Bake (open Edit)</p>
+            <p class="kb ui-hint hidden sm:block text-teal-200 text-xs drop-shadow-md mt-1">Left button: turn the view (click a photo to select it) · Right button: move a photo · Wheel: zoom</p>
+            <p class="tc ui-hint text-teal-200 text-xs drop-shadow-md mt-1">One finger turns the view (tap a photo to select it) · Two fingers zoom · Mode: Move photos moves a photo</p>
+            <div id="build-version" class="text-[10px] text-gray-400 mt-1" title="When this page was last uploaded to the server. If it is older than your last upload, this device is showing an old copy">Version</div>
+        </div>
+
+        <div class="flex flex-wrap gap-2 sm:justify-end">
+            <label for="pano-upload" title="Show an existing panorama behind the photos (optional, for comparison)" class="cursor-pointer bg-purple-600 hover:bg-purple-500 border border-purple-400 text-white font-semibold py-2 px-3 sm:px-4 text-sm sm:text-base rounded-lg shadow-lg transition-colors pointer-events-auto flex items-center gap-2 backdrop-blur-md">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                </svg>
+                <span><span class="sm:hidden">Background</span><span class="hidden sm:inline">Load Background Pano</span></span>
+            </label>
+            <input type="file" id="pano-upload" class="hidden">
+            <button id="bg-clear" style="display:none;" title="Take the background panorama away again" class="cursor-pointer bg-gray-700 hover:bg-gray-500 border border-gray-400 text-white font-semibold py-2 px-3 sm:px-4 text-sm sm:text-base rounded-lg shadow-lg transition-colors pointer-events-auto backdrop-blur-md">✕ Remove background</button>
+            <button id="bg-save-top" style="display:none;" title="The background panorama has been retouched. Save it as a JPEG with panorama metadata" class="cursor-pointer bg-emerald-700 hover:bg-emerald-600 border border-emerald-400 text-white font-semibold py-2 px-3 sm:px-4 text-sm sm:text-base rounded-lg shadow-lg transition-colors pointer-events-auto backdrop-blur-md">💾 Save retouched pano</button>
+
+            <label for="image-upload" title="Add the photos to stitch. Select all of them at once; order is taken from capture time." class="cursor-pointer bg-teal-600 hover:bg-teal-500 border border-teal-400 text-white font-semibold py-2 px-3 sm:px-4 text-sm sm:text-base rounded-lg shadow-lg transition-colors pointer-events-auto flex items-center gap-2 backdrop-blur-md">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path>
+                </svg>
+                <span><span class="sm:hidden">Add photos</span><span class="hidden sm:inline">Add Stitch Image(s)</span></span>
+            </label>
+            <input type="file" id="image-upload" multiple class="hidden">
+            <button id="shoot-btn" style="display:none;" title="Shoot the pictures with this device's camera" class="cursor-pointer bg-amber-600 border border-white/30 text-white font-semibold py-2 px-3 sm:px-4 text-sm sm:text-base rounded-lg shadow-lg transition-colors pointer-events-auto items-center gap-2 backdrop-blur-md">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.66-.89l.82-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.66.89l.82 1.22a2 2 0 001.66.89H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                <span>Shoot</span>
+            </button>
+        </div>
+    </div>
+
+    <div id="ui-bottom" class="flex flex-col items-center gap-4 pb-6">
+        <!-- Toolbar -->
+        <div class="flex flex-wrap justify-center gap-1.5 sm:gap-3 bg-black/40 p-2 sm:p-3 rounded-2xl backdrop-blur-md pointer-events-auto shadow-2xl">
+            <!-- Mode Toggle -->
+            <button id="mode-btn" style="display:none;" title="Touch screens have no right button: switch between turning the view and moving photos with one finger." class="bg-indigo-600 hover:bg-indigo-500 border border-indigo-400 text-white font-semibold py-2 px-2.5 sm:px-4 text-sm sm:text-base rounded-xl shadow-lg transition-all duration-300 flex items-center gap-2">
+                <span>Mode: Look</span>
+            </button>
+
+            <!-- Edit panel toggle -->
+            <button id="panel-btn" title="Show or hide the editing panel (steps 1 to 3)" class="bg-white/10 hover:bg-white/20 border border-white/30 text-white font-semibold py-2 px-2.5 sm:px-4 text-sm sm:text-base rounded-xl transition-all duration-300 flex items-center gap-2">
+                <span>Edit</span>
+            </button>
+
+            <div class="hidden sm:block w-px bg-white/20 mx-1"></div>
+
+            <!-- Fullscreen Button -->
+            <button id="fullscreen-btn" title="Toggle full screen" class="bg-white/10 hover:bg-white/20 border border-white/30 text-white font-semibold py-2 px-2.5 sm:px-4 text-sm sm:text-base rounded-xl transition-all duration-300 flex items-center gap-2">
+                <span>Full</span>
+            </button>
+
+            <!-- Toggle Gyro Button -->
+            <button id="gyro-btn" title="Steer the view by moving your device (phones and tablets)" class="bg-white/10 hover:bg-white/20 border border-white/30 text-white font-semibold py-2 px-2.5 sm:px-4 text-sm sm:text-base rounded-xl transition-all duration-300 flex items-center gap-2">
+                <span>Gyro</span>
+            </button>
+
+            <!-- Help -->
+            <a id="help-btn" href="help.html" target="_blank" rel="noopener" title="How to use Simple Pano, with recipes (F1)" class="bg-white/10 hover:bg-white/20 border border-white/30 text-white font-semibold py-2 px-2.5 sm:px-4 text-sm sm:text-base rounded-xl transition-all duration-300 flex items-center gap-2"><span>Help</span></a>
+        </div>
+    </div>
+
+    <!-- Edit panel -->
+    <div id="properties-panel" class="hidden absolute left-3 right-3 top-16 sm:left-auto sm:right-6 sm:top-24 bg-gray-900/95 text-white p-4 rounded-2xl shadow-2xl backdrop-blur-md pointer-events-auto flex flex-col gap-3 sm:w-72 border border-gray-700 overflow-y-auto" style="max-height: calc(100vh - 15rem);">
+        <div class="flex justify-between items-center border-b border-gray-600 pb-2">
+            <h3 class="font-bold text-lg">Edit</h3>
+            <button id="close-props-btn" title="Close the panel" class="text-gray-400 hover:text-white transition-colors">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+            </button>
+        </div>
+
+        <!-- 1. Align -->
+        <details class="sec step" open>
+            <summary title="Find matches and position every photo automatically">1 · Align</summary>
+            <button id="align-all-btn" title="Find matching features between all photos, then solve every photo position, the lens field of view and distortion. The first run takes a few minutes." class="sbtn bg-emerald-600 hover:bg-emerald-500 border border-emerald-400">Auto-align all</button>
+            <button id="snap-btn" title="Move the selected photo to where it best agrees with the photos it overlaps" class="sbtn bg-gray-700 hover:bg-gray-600 border border-gray-500 mt-2">Snap selected</button>
+            <label class="flex items-center gap-2 text-xs text-gray-300 mt-2"><input type="checkbox" id="snap-release-chk" title="After you drop a dragged photo, nudge it onto its matches if it is within 20 degrees of them" checked> Snap when I release a dragged image (within 20°). <span class="kb">Hold Shift while dragging for fine moves without snap.</span></label>
+            <p id="align-status" class="text-sm text-teal-200 mt-2" style="white-space:pre-wrap;">Not analyzed yet. Matching takes from a few seconds to a minute or two for large sets.</p>
+            <p id="fit-info" class="text-sm text-gray-300 mt-1" style="white-space:pre-wrap;"></p>
+            <button id="front-btn" title="Turn everything around the vertical axis so that the direction you are looking at in the main view becomes the front: the middle of the baked image, where most viewers start looking" class="sbtn bg-gray-700 hover:bg-gray-600 border border-gray-500 mt-2">Set front to this view</button>
+            <p class="text-[11px] text-gray-400 mt-1">The front is the middle of the baked image. Turn the main view to what should be the front, then press this: the photos, the patches and the background panorama are turned to put it there.</p>
+            <button id="level-btn" title="Click two points on the horizon: everything is turned until it is level" class="sbtn bg-gray-700 hover:bg-gray-600 border border-gray-500 mt-2">Straighten the horizon</button>
+            <button id="level-undo" title="Turn it back" class="sbtn bg-gray-700 hover:bg-gray-600 border border-gray-500 mt-1" style="display:none">Undo straightening</button>
+            <p class="text-[11px] text-gray-400 mt-1">Click two points on the horizon, far apart. The whole panorama is turned to make it level.</p>
+            <div class="flex gap-2 mt-2">
+                <button id="poses-save-btn" title="Download photo positions, lens and settings as a JSON file" class="sbtn w-1/2 bg-gray-700 hover:bg-gray-600 border border-gray-500">Save Poses</button>
+                <button id="poses-load-btn" title="Restore positions saved earlier (photos are matched by file name)" class="sbtn w-1/2 bg-gray-700 hover:bg-gray-600 border border-gray-500">Load Poses</button>
+            </div>
+            <input type="file" id="poses-file" accept=".json,application/json" class="hidden">
+        </details>
+
+        <!-- 3. Retouch -->
+        <details class="sec step">
+            <summary title="Remove people, brush ghosts out of a photo, or fill gaps (optional)">2 · Retouch (optional)</summary>
+            <p class="text-[11px] text-gray-400 mb-2">Do this after the photos are aligned.</p>
+            <div class="text-xs font-bold text-gray-200 mb-1">A. In the main view</div>
+            <p class="text-[11px] text-gray-400 mb-1">Select a photo and paint over a ghost or person in it with the left button: the other overlapping photos show through at once.</p>
+            <button id="mb-btn" title="Brush out on the panorama itself (in this main view): the selected photo is shown solid, and what you paint is not used from it, so the other overlapping photos show through" class="sbtn bg-amber-600 hover:bg-amber-500 border border-amber-400">Brush out here</button>
+            <div id="mb-opts" style="display:none;" class="mt-2">
+                <div class="flex justify-between"><label class="text-xs text-gray-300">Brush size</label><span id="mb-size-val" class="text-xs text-teal-300 font-bold">3°</span></div>
+                <input type="range" id="mb-size" title="Radius of the brush in degrees on the panorama" min="0.5" max="15" step="0.5" value="3" class="w-full accent-amber-500 cursor-pointer">
+                <label class="flex items-center gap-2 text-xs text-gray-300 mt-1"><input type="checkbox" id="mb-erase"> Erase mode (Alt flips it while held)</label>
+                <p class="text-[11px] text-gray-400">Select a photo: it is shown solid so you can see what it contributes. Paint over the ghost or person in it; the other overlapping photos then show through. Select the next photo to brush it too. [ and ] change the brush size. Erase mode, or holding Alt, gives the paint back; with Erase mode on, Alt paints. Right-drag turns the view, the wheel zooms. Esc ends brushing.</p>
+            </div>
+            <div class="flex gap-2 mt-2">
+                <button id="excl-clear-btn" title="Remove the painted mask of the selected photo" class="sbtn w-1/2 bg-gray-700 hover:bg-gray-600 border border-gray-500">Clear mask</button>
+                <button id="mb-clear-all" title="Remove the painted masks of all photos" class="sbtn w-1/2 bg-gray-700 hover:bg-gray-600 border border-gray-500">Clear all masks</button>
+            </div>
+            <div class="text-xs font-bold text-gray-200 mt-3 mb-1">B. In a separate window</div>
+            <p class="text-[11px] text-gray-400 mb-1">Opens a magnified view. Paint over something or a gap and fill it with a local fill or an AI editor, or brush a ghost out of a photo.</p>
+            <div class="flex gap-2 mb-2">
+                <div class="w-3/5"><label class="lbl">View</label>
+                    <select id="rt-view" title="Where to look when retouching. Use Straight down for the photographer's shadow or feet." class="fld">
+                        <option value="cam">Where I am looking</option>
+                        <option value="down">Straight down (nadir)</option>
+                        <option value="up">Straight up (zenith)</option>
+                    </select></div>
+                <div class="w-2/5"><label class="lbl">Width °</label><input type="number" id="rt-fov" title="Angle of view of the retouch window. Smaller = more detail per pixel." value="70" min="20" max="120" step="5" class="fld"></div>
+            </div>
+            <button id="rt-open-btn" title="Open the retouch window: fill gaps, remove things, brush out. Pan and zoom over the whole panorama there, queue spots, send them to the AI editor" class="sbtn bg-violet-600 hover:bg-violet-500 border border-violet-400">Retouch window…</button>
+            <div class="text-xs font-bold text-gray-200 mt-3 mb-1">C. The background panorama (after a bake)</div>
+            <p class="text-[11px] text-gray-400 mb-1">Retouch the loaded or just baked background panorama itself, to remove artifacts found after the bake. The edit changes the panorama, not the photos, so save it afterwards. The View and Width boxes above apply here too; a smaller width gives more detail.</p>
+            <button id="rt-open-bg-btn" disabled title="Open the retouch window on the background panorama (the one shown on top after a bake, or loaded with Load Background Pano)" class="sbtn bg-violet-600 hover:bg-violet-500 border border-violet-400">Retouch the background pano…</button>
+            <div class="flex gap-2 mt-2">
+                <button id="bg-undo" disabled title="Take the last retouch of the background panorama back" class="sbtn w-1/2 bg-gray-700 hover:bg-gray-600 border border-gray-500">Undo last edit</button>
+                <button id="bg-save" disabled title="Save the background panorama (with its edits) as a JPEG with panorama metadata" class="sbtn w-1/2 bg-emerald-700 hover:bg-emerald-600 border border-emerald-400">Save modified pano</button>
+            </div>
+            <p class="text-[11px] text-gray-400 mt-2">Results of the retouches (keep or take out each one, delete) are listed in the retouch window.</p>
+            <div class="text-xs font-bold text-gray-200 mt-3 mb-1">D. A logo at the nadir</div>
+            <p class="text-[11px] text-gray-400 mb-1">Covers the tripod and your shadow with a logo or a round picture, as if it lay on the floor under the camera. It goes into the background panorama if there is one, otherwise over the stitched photos (and is included when you bake). The top of the logo points toward the middle of the panorama image.</p>
+            <input type="file" id="logo-file" hidden>
+            <div class="flex gap-2 mb-2 items-center"><button id="logo-choose" title="Choose a logo (a PNG with a transparent background works best) or any picture" class="sbtn bg-gray-700 hover:bg-gray-600 border border-gray-500" style="width:auto; padding:0.2rem 0.7rem;">Choose logo…</button><span id="logo-name" class="text-xs text-gray-300 truncate"></span></div>
+            <div class="flex gap-2 mb-2">
+                <div class="w-1/3"><label class="lbl" title="Width of the logo, as an angle seen from the camera">Size °</label><input type="number" id="logo-size" value="40" min="5" max="100" step="5" class="fld"></div>
+                <div class="w-1/3"><label class="lbl" title="Turn the logo clockwise, seen from above">Turn °</label><input type="number" id="logo-rot" value="0" min="-180" max="180" step="5" class="fld"></div>
+                <div class="w-1/3"><label class="lbl">Opacity %</label><input type="number" id="logo-op" value="100" min="5" max="100" step="5" class="fld"></div>
+            </div>
+            <label class="flex items-center gap-2 text-xs text-gray-300 mb-2" title="Fill a round area with the picture and fade its edge: for a photo or a disc, rather than a logo with its own shape"><input type="checkbox" id="logo-round"> Round, with a soft edge</label>
+            <div class="flex gap-2">
+                <button id="logo-place" disabled title="Place the logo. Placing again replaces the one already placed." class="sbtn w-1/2 bg-violet-600 hover:bg-violet-500 border border-violet-400">Place logo</button>
+                <button id="logo-remove" disabled title="Take the placed logo away" class="sbtn w-1/2 bg-gray-700 hover:bg-gray-600 border border-gray-500">Remove logo</button>
+            </div>
+            <div id="queue-box" class="mt-2" style="display:none;">
+                <div class="text-xs text-gray-300 mb-1">Queued retouch spots</div>
+                <div id="queue-list" style="font-size:0.85rem;"></div>
+                <div class="flex gap-2 mt-1">
+                    <button id="queue-run" title="Send all queued spots now, in one AI request. Each result is applied to the panorama or becomes a patch." class="sbtn w-1/2 bg-fuchsia-700 hover:bg-fuchsia-600 border border-fuchsia-400">Run queued</button>
+                    <button id="queue-clear" class="sbtn w-1/2 bg-gray-700 hover:bg-gray-600 border border-gray-500">Clear queue</button>
+                </div>
+            </div>
+        </details>
+
+        <!-- 4. Bake -->
+        <details class="sec step" open>
+            <summary title="Render the final panorama">3 · Bake the panorama</summary>
+            <label class="lbl">Output</label>
+            <select id="bake-proj" title="The whole sphere, or only a window of it: for pictures that do not cover everything, such as a building or a landscape taken from one spot" class="fld mb-2">
+                <option value="sphere">Whole sphere (equirectangular 2:1)</option>
+                <option value="rect">Window, rectilinear (straight lines stay straight)</option>
+                <option value="cyl">Window, cylindrical (for wide views)</option>
+            </select>
+            <div id="bake-sph">
+            <label class="lbl">Equirectangular width (px)</label>
+            <select id="bake-size" title="Output width in pixels (height is half). Use 4096 on phones and tablets." class="fld mb-2">
+                <option value="4096">4096 × 2048</option>
+                <option value="8192" selected>8192 × 4096</option>
+                <option value="12288">12288 × 6144</option>
+                <option value="16384">16384 × 8192</option>
+            </select>
+            <label class="flex items-center gap-2 text-xs text-gray-300 mb-2" title="Cut away the empty (black) edges, so the saved picture has no black borders. The file still tells viewers where it sits on the sphere."><input id="bake-crop" type="checkbox" checked> Crop away empty edges</label>
+            </div>
+            <div id="bake-win" class="hidden">
+                <p class="text-[11px] text-gray-400 mb-1">The window is centered on where the main view is looking, and kept level.</p>
+                <div class="flex gap-2 mb-2">
+                    <div class="w-1/2"><label class="lbl">Width (°)</label><input id="bake-hfov" type="number" min="5" max="360" value="90" class="fld" title="Horizontal angle of the window"></div>
+                    <div class="w-1/2"><label class="lbl">Height (°)</label><input id="bake-vfov" type="number" min="5" max="170" value="60" class="fld" title="Vertical angle of the window"></div>
+                </div>
+                <label class="lbl">Width (px)</label>
+                <input id="bake-ww" type="number" min="256" max="16384" step="16" value="4096" class="fld mb-2" title="Output width in pixels; the height follows from the angles. The suggested value is the photos' own resolution.">
+                <label class="lbl">Made from</label>
+                <select id="bake-src" title="The photos with their patches, or the background panorama (with its retouching)" class="fld mb-2">
+                    <option value="photos">The photos and patches</option>
+                    <option value="bg">The background panorama</option>
+                </select>
+            </div>
+            <button id="bake-btn" title="Bake: render the final full resolution panorama and download it as a JPEG with panorama metadata" class="sbtn bg-pink-600 hover:bg-pink-500 border border-pink-400" style="font-size:0.9rem; padding:0.55rem;">Bake panorama</button>
+            <p id="bake-info" class="text-[10px] text-gray-400 mt-1">Phones/iPad: use 4096. Native resolution shown when images are loaded.</p>
+        </details>
+
+        <div class="optlabel">Options</div>
+
+        <details class="sec" name="opts">
+            <summary title="Adjust single photos: angles, blend priority, remove">Manual positioning</summary>
+            <div id="sel-section">
+                <p id="sel-name" class="text-xs text-teal-300 mb-2 truncate">None (Drag mode: click an image)</p>
+                <div class="flex gap-2 mb-2">
+                    <div class="w-1/3"><label class="lbl text-center">Yaw °</label><input type="number" id="nudge-yaw" title="Heading of the photo center in degrees (also changed by dragging or the left/right keys)" step="0.1" class="fld text-center"></div>
+                    <div class="w-1/3"><label class="lbl text-center">Pitch °</label><input type="number" id="nudge-pitch" title="Up or down angle of the photo center in degrees (up/down keys)" step="0.1" class="fld text-center"></div>
+                    <div class="w-1/3"><label class="lbl text-center">Roll °</label><input type="number" id="nudge-roll" title="Rotation about the viewing direction in degrees ([ and ] keys)" step="0.1" class="fld text-center"></div>
+                </div>
+                <label class="flex items-center gap-2 text-xs text-gray-300 mb-2"><input type="checkbox" id="sel-enabled" title="Untick to leave this photo out of the panorama" checked> Include in stitch</label>
+                <div class="flex justify-between">
+                    <label class="text-xs text-gray-300">Blend priority</label>
+                    <span id="sel-prio-val" class="text-xs text-teal-300 font-bold">×1.00</span>
+                </div>
+                <input type="range" id="sel-prio" title="Where photos overlap, a higher value lets this photo win more of the overlap. Shift + mouse wheel over a photo, or + and - keys, do the same." min="-2" max="2" step="0.25" value="0" class="w-full accent-teal-500 cursor-pointer">
+                <p class="text-[11px] text-gray-400 mb-2">Raise it so this image wins where images overlap (fewer double exposures). Shortcuts: hold Shift and turn the mouse wheel over an image, or press + / -. Auto-Align sets it from alignment quality.</p>
+                <p class="text-[10px] text-gray-400 mb-2">Keys: ←/→ yaw, ↑/↓ pitch, [ / ] roll (0.1°, Shift = 1°), Esc = deselect</p>
+                <button id="remove-img-btn" title="Remove this photo from the project" class="sbtn bg-red-600/90 hover:bg-red-500 border border-red-400">Remove Image</button>
+            </div>
+            <h4 class="mt-3" style="font-size:0.8rem; font-weight:700; color:#e5e7eb;">Images</h4>
+            <div id="img-list" style="max-height: 10rem; overflow-y: auto; font-size: 0.85rem;"></div>
+            <p class="text-[10px] text-gray-400 mt-1">Click: select it and turn to look at it. Shift-click a second image: swap poses with the selected one.</p>
+            <button id="remove-all-btn" title="Remove all the photos (and the patches made from them) so only the background panorama is left. Click twice to confirm." class="sbtn bg-red-800 hover:bg-red-700 border border-red-500 mt-2">Remove all photos</button>
+            <button id="swap-poles-btn" title="Flip poles: if the top and bottom cap photos ended up swapped, click to exchange them" class="sbtn bg-gray-700 hover:bg-gray-600 border border-gray-500 mt-2">Flip poles</button>
+        </details>
+
+        <details class="sec" name="opts">
+            <summary title="Field of view of the camera lens">Lens</summary>
+            <label class="lbl">Field of view across long side (°)</label>
+            <input type="number" id="lens-fov" title="Angle of view across the long side of the photo. Auto-Align estimates it; the Pixel 8 main camera is about 69 degrees." step="0.1" value="69.4" class="fld">
+            <p id="lens-info" class="text-[10px] text-gray-400 mt-1">Default (Pixel 8 main camera ≈ 69.4°)</p>
+        </details>
+
+        <details class="sec" name="opts">
+            <summary title="What is shown, and how overlaps are blended">Display and blending</summary>
+            <label class="flex items-center gap-2 text-xs text-gray-300 mb-2" title="Hide the stitched photos and their outlines to look at the background panorama alone (for example a baked panorama you loaded to check it)"><input type="checkbox" id="stitch-show" checked> Show the stitched photos (untick to see only the background panorama)</label>
+            <label class="flex items-center gap-2 text-xs text-gray-300 mb-2" title="Put the background panorama in front of the photos, to inspect a baked result. After a bake it is switched on for you. Untick to go back to the live photos."><input type="checkbox" id="bg-top" disabled> Show the background panorama on top of the photos</label>
+            <label class="flex items-center gap-2 text-xs text-gray-300 mt-2"><input type="checkbox" id="outline-chk" title="Draw the border of every photo" checked> Show image outlines</label>
+            <div class="flex justify-between mt-2">
+                <label class="text-xs text-gray-300">Blend sharpness (ghost removal)</label>
+                <span id="blend-val" class="text-xs text-teal-300 font-bold">6</span>
+            </div>
+            <input type="range" id="blend-slider" title="1 = plain averaging of overlaps. Higher = each detail comes mostly from one photo (removes double edges from parallax; may show small steps)." min="1" max="16" step="1" value="6" class="w-full accent-teal-500 cursor-pointer">
+            <p class="text-[11px] text-gray-400">1 = plain averaging of overlaps. Higher: each detail comes mostly from one image, which removes double edges from parallax.</p>
+        </details>
+    </div>
+</div>
+
+<script>window.PANO_BUILD = '20261121-2200';   // stamp.sh changes this number (and the ?v= ones) on every deploy, so no device keeps an old copy</script>
+<script>if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost')) navigator.serviceWorker.register('sw.js').catch(function () { });   // install to the Home Screen, work offline, take updates</script>
+<script src="vendor/three.min.js?v=20261121-2200"></script>
+<script src="vendor/DeviceOrientationControls.js?v=20261121-2200"></script>
+<script src="vendor/exifr.lite.umd.js?v=20261121-2200"></script>
+<script src="pano_app.js?v=20261121-2200"></script>
+</body>
+</html>
